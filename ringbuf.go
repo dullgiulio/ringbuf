@@ -146,6 +146,7 @@ func (r *Ringbuf) Run() {
 
 			// If the reader being cancelled is starving, rescue it.
 			if r.readersStarving[reader] {
+				r.readersStarving[reader] = false
 				reader.starving <- true
 			}
 		// Reader signaling that it has finished reading.
