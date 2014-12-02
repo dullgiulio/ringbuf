@@ -1,8 +1,8 @@
 package multiplex
 
 import (
-	"github.com/dullgiulio/ringbuf"
 	"fmt"
+	"github.com/dullgiulio/ringbuf"
 	"testing"
 )
 

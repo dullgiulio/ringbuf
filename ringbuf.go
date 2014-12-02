@@ -12,9 +12,9 @@ type Ringbuf struct {
 }
 
 type RingbufWrite struct {
-	data       interface{}    // Data to write
-	reader     *Reader // Reader to wait for, if any
-	responseCh chan<- bool    // Where to confirm the success/failure of the write
+	data       interface{} // Data to write
+	reader     *Reader     // Reader to wait for, if any
+	responseCh chan<- bool // Where to confirm the success/failure of the write
 }
 
 func NewRingbuf(size int64) *Ringbuf {
