@@ -1,7 +1,7 @@
 package multiplex
 
 import (
-	"bitbucket.org/dullgiulio/ringbuf"
+	"github.com/dullgiulio/ringbuf"
 	"fmt"
 )
 

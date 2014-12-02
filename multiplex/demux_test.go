@@ -1,7 +1,7 @@
 package multiplex
 
 import (
-	"bitbucket.org/dullgiulio/ringbuf"
+	"github.com/dullgiulio/ringbuf"
 	"fmt"
 	"sync"
 	"testing"
@@ -27,7 +27,7 @@ func TestDemuxReadFromOne(t *testing.T) {
 	}()
 	go ring.Run()
 
-	r := NewDemuxReader(ringbuf.NewRingbufReader(ring))
+	r := NewDemuxReader(ringbuf.NewReader(ring))
 	r.SetOnCancel(func() {
 		finishedCh <- true
 	})
@@ -98,7 +98,7 @@ func TestDemuxReadFromMany(t *testing.T) {
 	}()
 
 	wg.Add(1)
-	r := NewDemuxReader(ringbuf.NewRingbufReader(rings[0]))
+	r := NewDemuxReader(ringbuf.NewReader(rings[0]))
 	r.SetOnCancel(func() {
 		wg.Done()
 	})
@@ -109,7 +109,7 @@ func TestDemuxReadFromMany(t *testing.T) {
 	rings[0].Write("test0-2")
 
 	wg.Add(1)
-	r = NewDemuxReader(ringbuf.NewRingbufReader(rings[1]))
+	r = NewDemuxReader(ringbuf.NewReader(rings[1]))
 	r.SetOnCancel(func() {
 		wg.Done()
 	})
@@ -121,7 +121,7 @@ func TestDemuxReadFromMany(t *testing.T) {
 
 	// Add third ringbuf to demux
 	wg.Add(1)
-	r = NewDemuxReader(ringbuf.NewRingbufReader(rings[2]))
+	r = NewDemuxReader(ringbuf.NewReader(rings[2]))
 	r.SetOnCancel(func() {
 		wg.Done()
 	})

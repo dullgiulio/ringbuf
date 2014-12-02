@@ -1,7 +1,7 @@
 package multiplex
 
 import (
-	"bitbucket.org/dullgiulio/ringbuf"
+	"github.com/dullgiulio/ringbuf"
 	"fmt"
 	"testing"
 )
@@ -47,9 +47,9 @@ func TestMuxWritesToRings(t *testing.T) {
 
 	mux.Cancel()
 
-	readers := make([]*ringbuf.RingbufReader, 2)
-	readers[0] = ringbuf.NewRingbufReader(rings[0])
-	readers[1] = ringbuf.NewRingbufReader(rings[1])
+	readers := make([]*ringbuf.Reader, 2)
+	readers[0] = ringbuf.NewReader(rings[0])
+	readers[1] = ringbuf.NewReader(rings[1])
 
 	dataCh := readers[0].ReadCh()
 

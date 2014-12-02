@@ -1,7 +1,7 @@
 package multiplex
 
 import (
-	"bitbucket.org/dullgiulio/ringbuf"
+	"github.com/dullgiulio/ringbuf"
 	"fmt"
 )
 
@@ -39,12 +39,12 @@ func newDemuxMessageRemove(reader *DemuxReader) DemuxMessage {
 }
 
 type DemuxReader struct {
-	reader   *ringbuf.RingbufReader
+	reader   *ringbuf.Reader
 	cancelCh chan bool
 	onCancel func()
 }
 
-func NewDemuxReader(reader *ringbuf.RingbufReader) *DemuxReader {
+func NewDemuxReader(reader *ringbuf.Reader) *DemuxReader {
 	return &DemuxReader{
 		reader:   reader,
 		cancelCh: make(chan bool),
@@ -147,8 +147,8 @@ func (d *Demux) handleMessage(errorCh chan<- error, msg DemuxMessage) bool {
 	return true
 }
 
-func (d *Demux) Reader() *ringbuf.RingbufReader {
-	return ringbuf.NewRingbufReader(d.ring)
+func (d *Demux) Reader() *ringbuf.Reader {
+	return ringbuf.NewReader(d.ring)
 }
 
 func (d *Demux) Run(errorCh chan<- error) {
