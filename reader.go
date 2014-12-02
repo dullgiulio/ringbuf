@@ -1,6 +1,6 @@
 package ringbuf
 
-type RingbufReader struct {
+type Reader struct {
 	ring   *Ringbuf
 	pos    int64
 	cycles int64
@@ -10,8 +10,8 @@ type RingbufReader struct {
 	readCh   chan interface{}
 }
 
-func NewRingbufReader(r *Ringbuf) *RingbufReader {
-	return &RingbufReader{
+func NewReader(r *Ringbuf) *Reader {
+	return &Reader{
 		ring: r,
 		// Do not buffer the reader's outputCh, that will make
 		// contention unbearably slow.
@@ -21,7 +21,7 @@ func NewRingbufReader(r *Ringbuf) *RingbufReader {
 	}
 }
 
-func (r *RingbufReader) ReadCh() <-chan interface{} {
+func (r *Reader) ReadCh() <-chan interface{} {
 	go func() {
 		for {
 			// Request data from the ringbuf. Will reply on outputCh when ready.
@@ -50,11 +50,11 @@ func (r *RingbufReader) ReadCh() <-chan interface{} {
 	return r.readCh
 }
 
-func (r *RingbufReader) Cancel() {
+func (r *Reader) Cancel() {
 	r.ring.dataCh <- newRingbufData(ringbufStatusReaderRequestCancel, r)
 }
 
-func (r *RingbufReader) cleanup() {
+func (r *Reader) cleanup() {
 	// Close channels.
 	close(r.readCh)
 	close(r.outputCh)

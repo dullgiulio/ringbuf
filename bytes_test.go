@@ -23,7 +23,7 @@ func TestBytesWriterInterface(t *testing.T) {
 		// Wait for all writes to be completed.
 		<-readReady
 
-		reader := NewRingbufReaderBytes(writer)
+		reader := NewReaderBytes(writer)
 		i := 0
 
 		for {

@@ -10,7 +10,7 @@ func TestStrangeRingbuf(t *testing.T) {
 	// XXX: Zero-sized ringbuf panics. I can't test that, but believe me it does it.
 
 	ring := NewRingbuf(1)
-	reader := NewRingbufReader(ring)
+	reader := NewReader(ring)
 
 	ring.write("test0")
 	ring.write("test1")
@@ -20,7 +20,7 @@ func TestStrangeRingbuf(t *testing.T) {
 	}
 }
 
-func helperTestTwoValues(reader *RingbufReader, wg *sync.WaitGroup, t *testing.T) {
+func helperTestTwoValues(reader *Reader, wg *sync.WaitGroup, t *testing.T) {
 	notFirst := false
 
 	for data := range reader.ReadCh() {
@@ -54,8 +54,8 @@ func TestConcurrentWriteReadWithRange(t *testing.T) {
 	wg.Add(2)
 
 	ring := NewRingbuf(3)
-	reader1 := NewRingbufReader(ring)
-	reader2 := NewRingbufReader(ring)
+	reader1 := NewReader(ring)
+	reader2 := NewReader(ring)
 
 	// Write from the multiplexed chan
 	go func() {

@@ -11,7 +11,7 @@ func (r *Ringbuf) write(data interface{}) {
 	r.pos++
 }
 
-func (r *Ringbuf) writeOrStarve(data interface{}, lastReader *RingbufReader) bool {
+func (r *Ringbuf) writeOrStarve(data interface{}, lastReader *Reader) bool {
 	if r.pos >= r.size {
 		r.pos = 0
 		r.cycles++
@@ -28,7 +28,7 @@ func (r *Ringbuf) writeOrStarve(data interface{}, lastReader *RingbufReader) boo
 }
 
 // TODO: instead of bool, pass a status: done, doneWithSkip, notDone
-func (r *RingbufReader) read() (interface{}, bool) {
+func (r *Reader) read() (interface{}, bool) {
 	// 1. All normal. We are behind the writer
 	if r.pos <= r.ring.pos-1 && r.cycles == r.ring.cycles {
 		data := r.ring.data[r.pos]
@@ -76,7 +76,7 @@ func (r *RingbufReader) read() (interface{}, bool) {
 	return "", false
 }
 
-func SlowestReader(readers []*RingbufReader) (slowestReader *RingbufReader) {
+func SlowestReader(readers []*Reader) (slowestReader *Reader) {
 	for _, r := range readers {
 		if slowestReader == nil {
 			slowestReader = r

@@ -7,7 +7,7 @@ import (
 
 func TestSimpleWriteRead(t *testing.T) {
 	ring := NewRingbuf(3)
-	reader := NewRingbufReader(ring)
+	reader := NewReader(ring)
 
 	ring.write("test0")
 	ring.write("test1")
@@ -52,7 +52,7 @@ func TestSimpleWriteRead(t *testing.T) {
 
 func TestWriteWithStarve(t *testing.T) {
 	ring := NewRingbuf(3)
-	reader := NewRingbufReader(ring)
+	reader := NewReader(ring)
 
 	if !ring.writeOrStarve("test0", reader) {
 		t.Error("Unexpected starve on read of with reader")

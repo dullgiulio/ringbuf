@@ -38,21 +38,21 @@ func (rb *RingbufBytes) Ringbuf() *Ringbuf {
 	return rb.r
 }
 
-type RingbufReaderBytes struct {
-	rb    *RingbufReader
+type ReaderBytes struct {
+	rb    *Reader
 	ch    <-chan interface{}
 	isEOF bool
 }
 
-func NewRingbufReaderBytes(r *RingbufBytes) *RingbufReaderBytes {
-	reader := NewRingbufReader(r.r)
-	return &RingbufReaderBytes{
+func NewReaderBytes(r *RingbufBytes) *ReaderBytes {
+	reader := NewReader(r.r)
+	return &ReaderBytes{
 		rb: reader,
 		ch: reader.ReadCh(),
 	}
 }
 
-func (r *RingbufReaderBytes) Read(p []byte) (bread int, err error) {
+func (r *ReaderBytes) Read(p []byte) (bread int, err error) {
 	if r.isEOF {
 		return
 	}

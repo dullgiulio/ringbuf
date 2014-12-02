@@ -6,14 +6,14 @@ type Ringbuf struct {
 	cycles          int64
 	size            int64
 	dataCh          chan RingbufData
-	readersStarving map[*RingbufReader]bool
-	readersCanceled map[*RingbufReader]bool
+	readersStarving map[*Reader]bool
+	readersCanceled map[*Reader]bool
 	readOnly        bool
 }
 
 type RingbufWrite struct {
 	data       interface{}    // Data to write
-	reader     *RingbufReader // Reader to wait for, if any
+	reader     *Reader // Reader to wait for, if any
 	responseCh chan<- bool    // Where to confirm the success/failure of the write
 }
 
@@ -26,8 +26,8 @@ func NewRingbuf(size int64) *Ringbuf {
 		data:            make([]interface{}, size),
 		size:            size,
 		dataCh:          make(chan RingbufData),
-		readersStarving: make(map[*RingbufReader]bool),
-		readersCanceled: make(map[*RingbufReader]bool),
+		readersStarving: make(map[*Reader]bool),
+		readersCanceled: make(map[*Reader]bool),
 	}
 }
 
@@ -36,7 +36,7 @@ func (r *Ringbuf) Write(data interface{}) {
 	r.dataCh <- newRingbufData(ringbufStatusWrite, data)
 }
 
-func (r *Ringbuf) WriteOrStarve(data interface{}, reader *RingbufReader, responseCh chan<- bool) {
+func (r *Ringbuf) WriteOrStarve(data interface{}, reader *Reader, responseCh chan<- bool) {
 	r.dataCh <- newRingbufData(ringbufStatusWriteOrStarve, &RingbufWrite{data, reader, responseCh})
 }
 
@@ -111,7 +111,7 @@ func (r *Ringbuf) Run() {
 			// Reader requesting data.
 		case ringbufStatusReader:
 			// This is a cast to a pointer, never fails.
-			reader := msg.data.(*RingbufReader)
+			reader := msg.data.(*Reader)
 
 			// This reader has been canceled and must exit.
 			if t, ok := r.readersCanceled[reader]; ok && t {
@@ -141,7 +141,7 @@ func (r *Ringbuf) Run() {
 				reader.outputCh <- newRingbufData(ringbufStatusEOF, nil)
 			}
 		case ringbufStatusReaderRequestCancel:
-			reader := msg.data.(*RingbufReader)
+			reader := msg.data.(*Reader)
 			r.readersCanceled[reader] = true
 
 			// If the reader being cancelled is starving, rescue it.
@@ -153,7 +153,7 @@ func (r *Ringbuf) Run() {
 		case ringbufStatusReaderCancel:
 			// A reader has finished (either because it is cancelled or got EOF from us)
 			// Unregister it from our list of known readers.
-			reader := msg.data.(*RingbufReader)
+			reader := msg.data.(*Reader)
 			delete(r.readersStarving, reader)
 			delete(r.readersCanceled, reader)
 
