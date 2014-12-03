@@ -11,6 +11,10 @@ func TestDemuxCancel(t *testing.T) {
 	demux := NewDemux()
 	errorCh := make(chan error)
 
+    if demux.String() == "" {
+        t.Error("Expected a string coversion")
+    }
+
 	go demux.Run(errorCh)
 	demux.Cancel()
 }
@@ -98,22 +102,27 @@ func TestDemuxReadFromMany(t *testing.T) {
 	}()
 
 	wg.Add(1)
-	r := NewDemuxReader(ringbuf.NewReader(rings[0]))
-	r.SetOnCancel(func() {
+	r0 := NewDemuxReader(ringbuf.NewReader(rings[0]))
+	r0.SetOnCancel(func() {
 		wg.Done()
 	})
-	demux.Add(r)
+	demux.Add(r0)
+    demux.Add(r0)
+
+    if err := <- errorCh; err == nil {
+        t.Error("Expected error after inserting the same writer twice")
+    }
 
 	rings[0].Write("test0-0")
 	rings[0].Write("test0-1")
 	rings[0].Write("test0-2")
 
 	wg.Add(1)
-	r = NewDemuxReader(ringbuf.NewReader(rings[1]))
-	r.SetOnCancel(func() {
+    r1 := NewDemuxReader(ringbuf.NewReader(rings[1]))
+	r1.SetOnCancel(func() {
 		wg.Done()
 	})
-	demux.Add(r)
+	demux.Add(r1)
 
 	rings[1].Write("test1-0")
 	rings[1].Write("test1-1")
@@ -121,11 +130,11 @@ func TestDemuxReadFromMany(t *testing.T) {
 
 	// Add third ringbuf to demux
 	wg.Add(1)
-	r = NewDemuxReader(ringbuf.NewReader(rings[2]))
-	r.SetOnCancel(func() {
+    r2 := NewDemuxReader(ringbuf.NewReader(rings[2]))
+	r2.SetOnCancel(func() {
 		wg.Done()
 	})
-	demux.Add(r)
+	demux.Add(r2)
 
 	// Terminate ringbufs.
 	rings[0].Cancel()
@@ -173,7 +182,16 @@ func TestDemuxReadFromMany(t *testing.T) {
 		}
 	}
 
-	demux.Cancel()
+    demux.Remove(r0)
+    demux.Remove(r1)
+    demux.Remove(r2)
+    demux.Remove(r2)
+
+    if err := <- errorCh; err == nil {
+        t.Error("Expected error after removing reader twice")
+    }
+
+    demux.Cancel()
 
 	<-finishCh
 	wg.Wait()

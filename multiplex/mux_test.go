@@ -9,6 +9,10 @@ import (
 func TestMuxCancel(t *testing.T) {
 	mux := NewMux()
 
+    if mux.String() == "" {
+        t.Error("Expected a string conversion")
+    }
+
 	if mux.running == true {
 		t.Error("Newly created mux is already marked as running.")
 	}
@@ -36,6 +40,10 @@ func TestMuxWritesToRings(t *testing.T) {
 	go mux.Run(errorCh)
 
 	mux.Add(rings[0])
+    mux.Add(rings[0])
+    if err := <-errorCh; err == nil {
+        t.Error("Expected error after inserting the same writer twice")
+    }
 
 	mux.Write("test0")
 	mux.Write("test1")
@@ -44,6 +52,16 @@ func TestMuxWritesToRings(t *testing.T) {
 
 	mux.Write("test2")
 	mux.Write("test3")
+
+    mux.Remove(rings[0])
+
+    mux.Write("test4")
+
+    mux.Remove(rings[0])
+
+    if err := <-errorCh; err == nil {
+        t.Error("Expected error after removing the same writer twice")
+    }
 
 	mux.Cancel()
 
@@ -80,6 +98,10 @@ func TestMuxWritesToRings(t *testing.T) {
 	if data := <-dataCh; data != "test3" {
 		t.Error(fmt.Sprintf("Expected 'test3', got '%s'", data))
 	}
+
+    if data := <-dataCh; data != "test4" {
+        t.Error(fmt.Sprintf("Expected 'test4', got '%s'", data))
+    }
 
 	rings[1].Cancel()
 }

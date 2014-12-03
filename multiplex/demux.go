@@ -114,6 +114,10 @@ func (d *Demux) Add(reader *DemuxReader) {
 	d.messageCh <- newDemuxMessageAdd(reader)
 }
 
+func (d *Demux) Remove(reader *DemuxReader) {
+    d.messageCh <- newDemuxMessageRemove(reader)
+}
+
 func (d *Demux) findReader(rr *DemuxReader) int {
 	for r := range d.readers {
 		if d.readers[r] == rr {
@@ -138,8 +142,9 @@ func (d *Demux) handleMessage(errorCh chan<- error, msg DemuxMessage) bool {
 		}
 	case demuxMessageRemove:
 		if i := d.findReader(msg.reader); i >= 0 {
-			d.readers[i], d.readers[len(d.readers)-1], d.readers = d.readers[len(d.readers)-1], nil, d.readers[:len(d.readers)-1]
-		} else {
+			d.readers[i].Cancel()
+            d.readers[i], d.readers[len(d.readers)-1], d.readers = d.readers[len(d.readers)-1], nil, d.readers[:len(d.readers)-1]
+        } else {
 			errorCh <- fmt.Errorf("%s: Attempt to delete a unregistered reader %p.", d, msg.reader)
 		}
 	}
