@@ -36,10 +36,6 @@ func (r *Ringbuf) Write(data interface{}) {
 	r.dataCh <- newRingbufData(ringbufStatusWrite, data)
 }
 
-func (r *Ringbuf) WriteOrStarve(data interface{}, reader *Reader, responseCh chan<- bool) {
-	r.dataCh <- newRingbufData(ringbufStatusWriteOrStarve, &RingbufWrite{data, reader, responseCh})
-}
-
 func (r *Ringbuf) Cancel() {
 	r.dataCh <- newRingbufData(ringbufStatusEOF, nil)
 }
@@ -91,22 +87,6 @@ func (r *Ringbuf) Run() {
 
 				// Readers should now try again reading.
 				r.wakeupStarving()
-			}
-		// Write but fail if readers would skip data.
-		case ringbufStatusWriteOrStarve:
-			if msgW, ok := msg.data.(*RingbufWrite); ok {
-				if !r.readOnly {
-					go func(rw *RingbufWrite) {
-						if rw.reader != nil {
-							rw.responseCh <- r.writeOrStarve(rw.data, rw.reader)
-						} else {
-							r.write(rw.data)
-							rw.responseCh <- true
-						}
-
-						r.wakeupStarving()
-					}(msgW)
-				}
 			}
 			// Reader requesting data.
 		case ringbufStatusReader:

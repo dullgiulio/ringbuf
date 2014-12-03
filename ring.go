@@ -75,19 +75,3 @@ func (r *Reader) read() (interface{}, bool) {
 
 	return "", false
 }
-
-func SlowestReader(readers []*Reader) (slowestReader *Reader) {
-	for _, r := range readers {
-		if slowestReader == nil {
-			slowestReader = r
-			continue
-		}
-
-		if slowestReader.cycles >= r.cycles &&
-			slowestReader.pos > r.cycles {
-			slowestReader = r
-		}
-	}
-
-	return
-}
