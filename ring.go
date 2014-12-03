@@ -11,23 +11,6 @@ func (r *Ringbuf) write(data interface{}) {
 	r.pos++
 }
 
-func (r *Ringbuf) writeOrStarve(data interface{}, lastReader *Reader) bool {
-	if r.pos >= r.size {
-		r.pos = 0
-		r.cycles++
-	}
-
-	if lastReader.pos == r.pos &&
-		lastReader.cycles < r.cycles {
-		return false
-	}
-
-	r.data[r.pos] = data
-	r.pos++
-	return true
-}
-
-// TODO: instead of bool, pass a status: done, doneWithSkip, notDone
 func (r *Reader) read() (interface{}, bool) {
 	// 1. All normal. We are behind the writer
 	if r.pos <= r.ring.pos-1 && r.cycles == r.ring.cycles {
