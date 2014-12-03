@@ -28,33 +28,31 @@ func (r *Reader) read() (interface{}, bool) {
 
 	// 2. We are waiting for the writer
 	if r.pos >= r.ring.pos-1 && r.cycles >= r.ring.cycles {
-		return "", false
+		return nil, false
 	}
 
 	// 3. We are too far behind, the writer has wrapped around
 	if r.cycles < r.ring.cycles {
-		diffCycles := r.ring.cycles - r.cycles
-
-		// Distance between reader and writer > one ring
-		if r.ring.size-r.pos+r.ring.pos*diffCycles >= r.ring.size {
-			// Skip to where the ring starts now.
-			// TODO: I might want to get a warning here.
-			r.cycles = r.ring.cycles
-			r.pos = 0
-			return r.ring.data[0], true
-		} else {
+		if r.cycles == r.ring.cycles-1 && r.pos >= r.ring.pos {
+			// Can continue normally, the writer is still behind us
 			data := r.ring.data[r.pos]
 
 			r.pos++
 
 			if r.pos >= r.ring.size {
-				r.pos = 1
+				r.pos = 0
 				r.cycles++
 			}
 
 			return data, true
+		} else {
+			// Two or more cycles behind, cannot rescue this
+			// Instead, skip to where the ring starts now
+			r.cycles = r.ring.cycles
+			r.pos = 1
+			return r.ring.data[0], false
 		}
 	}
 
-	return "", false
+	return nil, false
 }
