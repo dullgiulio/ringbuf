@@ -6,16 +6,24 @@ import (
 	"testing"
 )
 
-func TestStrangeRingbuf(t *testing.T) {
-	// XXX: Zero-sized ringbuf panics. I can't test that, but believe me it does it.
+func TestZeroRingbuf(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Error("Expected panic()")
+		}
+	}()
 
+	NewRingbuf(0)
+}
+
+func TestStrangeRingbuf(t *testing.T) {
 	ring := NewRingbuf(1)
 	reader := NewReader(ring)
 
 	ring.write("test0")
 	ring.write("test1")
 
-	if val, ok := reader.read(); !ok || val != "test1" {
+	if val, ok := reader.read(); ok || val != "test1" {
 		t.Error(fmt.Sprintf("Expected value test1, got '%s'", val))
 	}
 }
@@ -47,7 +55,6 @@ func helperTestTwoValues(reader *Reader, wg *sync.WaitGroup, t *testing.T) {
 	wg.Done()
 }
 
-// This look like how I am going to use the Ringbuf in Pippe.
 func TestConcurrentWriteReadWithRange(t *testing.T) {
 	var wg sync.WaitGroup
 
@@ -74,4 +81,35 @@ func TestConcurrentWriteReadWithRange(t *testing.T) {
 	ring.Cancel()
 }
 
-// TODO: Test WriteOrStarve()
+func TestReadWithStarve(t *testing.T) {
+	ring := NewRingbuf(3)
+	reader := NewReader(ring)
+	readCh := reader.ReadCh()
+
+	go ring.Run()
+
+	proceed := make(chan bool, 1)
+
+	go func() {
+		ring.Write("test0")
+		s := <-readCh
+		if s != "test0" {
+			t.Error("Expected string not found")
+		}
+
+		ring.Write("test1")
+		s = <-readCh
+		if s != "test1" {
+			t.Error("Expected string not found")
+		}
+
+		proceed <- true
+		s = <-readCh
+	}()
+
+	<-proceed
+	reader.Cancel()
+
+	ring.Eof()
+	ring.Cancel()
+}

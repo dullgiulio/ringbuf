@@ -5,10 +5,8 @@ import (
 	"testing"
 )
 
-func TestBytesWriterInterface(t *testing.T) {
+func _testBytesWriter(t *testing.T, writer *RingbufBytes) {
 	readReady := make(chan bool)
-
-	writer := NewRingbufBytes(1024)
 
 	go func() {
 		for i := 0; i < 20; i++ {
@@ -24,22 +22,26 @@ func TestBytesWriterInterface(t *testing.T) {
 		<-readReady
 
 		reader := NewReaderBytes(writer)
-		i := 0
+		data := make([]byte, 100)
+		smallbuf := make([]byte, 2)
+
+		if n, err := reader.Read(smallbuf); n != 2 && err != nil {
+			t.Error("Expected error because buffer is too small")
+		}
+
+		i := 1
 
 		for {
-			data := make([]byte, 12)
-
 			// Blocks here until new data is read.
 			if n, err := reader.Read(data); err == nil {
 				if n == 0 {
 					break
 				}
 
-				// XXX: What ending do we have to remove here?!
-				data = data[0:n]
+				str := string(data[0:n])
 				exp := fmt.Sprintf("Some data %d", i)
 
-				if string(data) != exp {
+				if str != exp {
 					t.Error(fmt.Sprintf("Unexpected read from ringbuf.Reader(): expected '%s', got '%s'", exp, data))
 				}
 			} else {
@@ -50,8 +52,23 @@ func TestBytesWriterInterface(t *testing.T) {
 		}
 
 		writer.Close()
+
+		if n, e := reader.Read(data); n != 0 && e == nil {
+			t.Error("Did not expect a valid read after EOF")
+		}
 	}()
 
 	writer.Ringbuf().Run()
 	close(readReady)
+}
+
+func TestNewRinbufWriter(t *testing.T) {
+	writer := NewRingbufBytes(1024)
+	_testBytesWriter(t, writer)
+}
+
+func TestBytesWriter(t *testing.T) {
+	ring := NewRingbuf(1024)
+	writer := NewBytes(ring)
+	_testBytesWriter(t, writer)
 }
