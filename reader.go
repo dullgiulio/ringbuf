@@ -8,6 +8,11 @@ type Reader struct {
 	outputCh chan RingbufData
 	starving chan bool
 	readCh   chan interface{}
+	opts     *ReaderOptions
+}
+
+type ReaderOptions struct {
+	noStarve bool
 }
 
 func NewReader(r *Ringbuf) *Reader {
@@ -18,7 +23,18 @@ func NewReader(r *Ringbuf) *Reader {
 		outputCh: make(chan RingbufData),
 		starving: make(chan bool),
 		readCh:   make(chan interface{}),
+		opts:     &ReaderOptions{},
 	}
+}
+
+// Warning: this is not a safe operation. Do not set the configuration
+// options after aquiring a reading channel with ReadCh().
+func (r *Reader) SetOptions(opts *ReaderOptions) {
+	r.opts = opts
+}
+
+func (r *Reader) GetOptions() *ReaderOptions {
+	return r.opts
 }
 
 func (r *Reader) ReadCh() <-chan interface{} {
@@ -39,6 +55,12 @@ func (r *Reader) ReadCh() <-chan interface{} {
 				r.ring.dataCh <- newRingbufData(ringbufStatusReaderCancel, r)
 				return
 			case ringbufStatusStarving:
+				if r.opts.noStarve {
+					r.ring.dataCh <- newRingbufData(ringbufStatusReaderCancel, r)
+					<-r.starving
+					return
+				}
+
 				// The ringbuf has no data. Will signal on this channel that
 				// it is ready to serve us if we repeat the request.
 				<-r.starving

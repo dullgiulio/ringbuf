@@ -113,3 +113,24 @@ func TestReadWithStarve(t *testing.T) {
 	ring.Eof()
 	ring.Cancel()
 }
+
+func TestReadNoStarve(t *testing.T) {
+	ring := NewRingbuf(3)
+	reader := NewReader(ring)
+	reader.SetOptions(&ReaderOptions{noStarve: true})
+	readCh := reader.ReadCh()
+
+	go ring.Run()
+
+	ring.Write("test0")
+	ring.Eof()
+
+	if s := <-readCh; s != "test0" {
+		t.Error("Expected string not found")
+	}
+	if s := <-readCh; s != nil {
+		t.Error("Unexpected read from closed channel")
+	}
+
+	ring.Cancel()
+}
