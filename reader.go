@@ -12,7 +12,7 @@ type Reader struct {
 }
 
 type ReaderOptions struct {
-	noStarve bool
+	NoStarve bool
 }
 
 func NewReader(r *Ringbuf) *Reader {
@@ -55,7 +55,7 @@ func (r *Reader) ReadCh() <-chan interface{} {
 				r.ring.dataCh <- newRingbufData(ringbufStatusReaderCancel, r)
 				return
 			case ringbufStatusStarving:
-				if r.opts.noStarve {
+				if r.opts.NoStarve {
 					r.ring.dataCh <- newRingbufData(ringbufStatusReaderCancel, r)
 					<-r.starving
 					return

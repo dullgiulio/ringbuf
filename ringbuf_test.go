@@ -117,7 +117,7 @@ func TestReadWithStarve(t *testing.T) {
 func TestReadNoStarve(t *testing.T) {
 	ring := NewRingbuf(3)
 	reader := NewReader(ring)
-	reader.SetOptions(&ReaderOptions{noStarve: true})
+	reader.SetOptions(&ReaderOptions{NoStarve: true})
 	readCh := reader.ReadCh()
 
 	go ring.Run()
