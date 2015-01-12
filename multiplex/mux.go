@@ -91,13 +91,13 @@ func (m *Mux) handleMessage(errorCh chan<- error, msg MuxMessage) bool {
 		if m.findRing(msg.ring) < 0 {
 			m.rings = append(m.rings, msg.ring)
 		} else {
-			errorCh <- fmt.Errorf("%s: Attempt to insert ringbuf %p that has been inserted already.", m, msg.ring)
+			errorCh <- fmt.Errorf("%s: Attempt to insert ringbuf %p that has been inserted already", m, msg.ring)
 		}
 	case muxMessageRemove:
 		if i := m.findRing(msg.ring); i >= 0 {
 			m.rings[i], m.rings[len(m.rings)-1], m.rings = m.rings[len(m.rings)-1], nil, m.rings[:len(m.rings)-1]
 		} else {
-			errorCh <- fmt.Errorf("%s: Attempt to delete a unregistered ring %p.", m, msg.ring)
+			errorCh <- fmt.Errorf("%s: Attempt to delete a unregistered ring %p", m, msg.ring)
 		}
 	}
 

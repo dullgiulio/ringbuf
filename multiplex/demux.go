@@ -138,14 +138,14 @@ func (d *Demux) handleMessage(errorCh chan<- error, msg DemuxMessage) bool {
 
 			d.readers = append(d.readers, msg.reader)
 		} else {
-			errorCh <- fmt.Errorf("%s: Attempt to insert reader %p that been inserted already.", d, msg.reader)
+			errorCh <- fmt.Errorf("%s: Attempt to insert reader %p that been inserted already", d, msg.reader)
 		}
 	case demuxMessageRemove:
 		if i := d.findReader(msg.reader); i >= 0 {
 			d.readers[i].Cancel()
             d.readers[i], d.readers[len(d.readers)-1], d.readers = d.readers[len(d.readers)-1], nil, d.readers[:len(d.readers)-1]
         } else {
-			errorCh <- fmt.Errorf("%s: Attempt to delete a unregistered reader %p.", d, msg.reader)
+			errorCh <- fmt.Errorf("%s: Attempt to delete a unregistered reader %p", d, msg.reader)
 		}
 	}
 
