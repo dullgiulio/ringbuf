@@ -5,7 +5,7 @@ type Reader struct {
 	pos    int64
 	cycles int64
 	// Channel to write to.
-	outputCh chan RingbufData
+	outputCh chan Data
 	starving chan bool
 	readCh   chan interface{}
 	opts     *ReaderOptions
@@ -20,7 +20,7 @@ func NewReader(r *Ringbuf) *Reader {
 		ring: r,
 		// Do not buffer the reader's outputCh, that will make
 		// contention unbearably slow.
-		outputCh: make(chan RingbufData),
+		outputCh: make(chan Data),
 		starving: make(chan bool),
 		readCh:   make(chan interface{}),
 		opts:     &ReaderOptions{},
@@ -41,7 +41,7 @@ func (r *Reader) ReadCh() <-chan interface{} {
 	go func() {
 		for {
 			// Request data from the ringbuf. Will reply on outputCh when ready.
-			r.ring.dataCh <- newRingbufData(ringbufStatusReader, r)
+			r.ring.dataCh <- newData(ringbufStatusReader, r)
 
 			// Wait from a response from the ringbuf.
 			msg := <-r.outputCh
@@ -52,11 +52,11 @@ func (r *Reader) ReadCh() <-chan interface{} {
 				r.readCh <- msg.data
 			case ringbufStatusEOF:
 				// Signal the ringbuf that we are not using it any more.
-				r.ring.dataCh <- newRingbufData(ringbufStatusReaderCancel, r)
+				r.ring.dataCh <- newData(ringbufStatusReaderCancel, r)
 				return
 			case ringbufStatusStarving:
 				if r.opts.NoStarve {
-					r.ring.dataCh <- newRingbufData(ringbufStatusReaderCancel, r)
+					r.ring.dataCh <- newData(ringbufStatusReaderCancel, r)
 					<-r.starving
 					return
 				}
@@ -73,7 +73,7 @@ func (r *Reader) ReadCh() <-chan interface{} {
 }
 
 func (r *Reader) Cancel() {
-	r.ring.dataCh <- newRingbufData(ringbufStatusReaderRequestCancel, r)
+	r.ring.dataCh <- newData(ringbufStatusReaderRequestCancel, r)
 }
 
 func (r *Reader) cleanup() {

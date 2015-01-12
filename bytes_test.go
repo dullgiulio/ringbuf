@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func _testBytesWriter(t *testing.T, writer *RingbufBytes) {
+func _testBytesWriter(t *testing.T, writer *Bytes) {
 	readReady := make(chan bool)
 
 	go func() {
@@ -13,7 +13,7 @@ func _testBytesWriter(t *testing.T, writer *RingbufBytes) {
 			writer.Write([]byte(fmt.Sprintf("Some data %d", i)))
 		}
 
-		writer.Eof()
+		writer.EOF()
 		readReady <- true
 	}()
 

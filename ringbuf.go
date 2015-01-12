@@ -5,13 +5,13 @@ type Ringbuf struct {
 	pos             int64         // position for writing
 	cycles          int64
 	size            int64
-	dataCh          chan RingbufData
+	dataCh          chan Data
 	readersStarving map[*Reader]bool
 	readersCanceled map[*Reader]bool
 	readOnly        bool
 }
 
-type RingbufWrite struct {
+type Write struct {
 	data       interface{} // Data to write
 	reader     *Reader     // Reader to wait for, if any
 	responseCh chan<- bool // Where to confirm the success/failure of the write
@@ -25,7 +25,7 @@ func NewRingbuf(size int64) *Ringbuf {
 	return &Ringbuf{
 		data:            make([]interface{}, size),
 		size:            size,
-		dataCh:          make(chan RingbufData),
+		dataCh:          make(chan Data),
 		readersStarving: make(map[*Reader]bool),
 		readersCanceled: make(map[*Reader]bool),
 	}
@@ -33,15 +33,15 @@ func NewRingbuf(size int64) *Ringbuf {
 
 // Safe write via channel.
 func (r *Ringbuf) Write(data interface{}) {
-	r.dataCh <- newRingbufData(ringbufStatusWrite, data)
+	r.dataCh <- newData(ringbufStatusWrite, data)
 }
 
 func (r *Ringbuf) Cancel() {
-	r.dataCh <- newRingbufData(ringbufStatusEOF, nil)
+	r.dataCh <- newData(ringbufStatusEOF, nil)
 }
 
-func (r *Ringbuf) Eof() {
-	r.dataCh <- newRingbufData(ringbufStatusStarving, nil)
+func (r *Ringbuf) EOF() {
+	r.dataCh <- newData(ringbufStatusStarving, nil)
 }
 
 func (r *Ringbuf) wakeupStarving() {
@@ -68,11 +68,11 @@ func (r *Ringbuf) Run() {
 				// This has the potential to keep this ringbuf open forever
 				// if the readers misbehave and don't unsubscribe correctly.
 				return
-			} else {
-				// Otherwise, just wake up starving readers to send
-				// EOF and wait for them to quit gracefully.
-				r.wakeupStarving()
 			}
+
+			// Otherwise, just wake up starving readers to send
+			// EOF and wait for them to quit gracefully.
+			r.wakeupStarving()
 		// Writing finished, switch to read-only mode.
 		case ringbufStatusStarving:
 			r.readOnly = true
@@ -95,14 +95,14 @@ func (r *Ringbuf) Run() {
 
 			// This reader has been canceled and must exit.
 			if t, ok := r.readersCanceled[reader]; ok && t {
-				reader.outputCh <- newRingbufData(ringbufStatusEOF, nil)
+				reader.outputCh <- newData(ringbufStatusEOF, nil)
 				continue
 			}
 
 			if data, ok := reader.read(); ok && data != nil {
 				// Remember this as an active reader, serve it with fresh data.
 				r.readersStarving[reader] = false
-				reader.outputCh <- newRingbufData(ringbufStatusOK, data)
+				reader.outputCh <- newData(ringbufStatusOK, data)
 				continue
 			}
 
@@ -112,13 +112,13 @@ func (r *Ringbuf) Run() {
 				r.readersStarving[reader] = true
 				// Then reply to the reader that we are starving. The reader
 				// will then wait until we wake it up via starving channel.
-				reader.outputCh <- newRingbufData(ringbufStatusStarving, nil)
+				reader.outputCh <- newData(ringbufStatusStarving, nil)
 			} else {
 				// We are readOnly (there will be no more writes.) The reader
 				// will just get EOF and the reader exits, sending the ReaderCancel
 				// message to unsubscribe from this ringbuf.
 				r.readersStarving[reader] = false
-				reader.outputCh <- newRingbufData(ringbufStatusEOF, nil)
+				reader.outputCh <- newData(ringbufStatusEOF, nil)
 			}
 		case ringbufStatusReaderRequestCancel:
 			reader := msg.data.(*Reader)

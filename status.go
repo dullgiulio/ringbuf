@@ -14,11 +14,11 @@ const (
 
 type ringbufStatus int
 
-type RingbufData struct {
+type Data struct {
 	data   interface{}
 	status ringbufStatus
 }
 
-func newRingbufData(status ringbufStatus, data interface{}) RingbufData {
-	return RingbufData{data: data, status: status}
+func newData(status ringbufStatus, data interface{}) Data {
+	return Data{data: data, status: status}
 }

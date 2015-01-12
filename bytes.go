@@ -4,21 +4,21 @@ import "fmt"
 
 // Implement reader and writer interface for []byte
 
-type RingbufBytes struct {
+type Bytes struct {
 	r *Ringbuf
 }
 
-func NewRingbufBytes(size int64) *RingbufBytes {
-	return &RingbufBytes{
+func NewRingbufBytes(size int64) *Bytes {
+	return &Bytes{
 		r: NewRingbuf(size),
 	}
 }
 
-func NewBytes(r *Ringbuf) *RingbufBytes {
-	return &RingbufBytes{r: r}
+func NewBytes(r *Ringbuf) *Bytes {
+	return &Bytes{r: r}
 }
 
-func (rb *RingbufBytes) Write(b []byte) (int, error) {
+func (rb *Bytes) Write(b []byte) (int, error) {
 	data := make([]byte, len(b))
 	copy(data, b)
 
@@ -26,15 +26,15 @@ func (rb *RingbufBytes) Write(b []byte) (int, error) {
 	return len(data), nil
 }
 
-func (rb *RingbufBytes) Close() {
+func (rb *Bytes) Close() {
 	rb.r.Cancel()
 }
 
-func (rb *RingbufBytes) Eof() {
-	rb.r.Eof()
+func (rb *Bytes) EOF() {
+	rb.r.EOF()
 }
 
-func (rb *RingbufBytes) Ringbuf() *Ringbuf {
+func (rb *Bytes) Ringbuf() *Ringbuf {
 	return rb.r
 }
 
@@ -44,7 +44,7 @@ type ReaderBytes struct {
 	isEOF bool
 }
 
-func NewReaderBytes(r *RingbufBytes) *ReaderBytes {
+func NewReaderBytes(r *Bytes) *ReaderBytes {
 	reader := NewReader(r.r)
 	return &ReaderBytes{
 		rb: reader,

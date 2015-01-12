@@ -45,13 +45,13 @@ func (r *Reader) read() (interface{}, bool) {
 			}
 
 			return data, true
-		} else {
-			// Two or more cycles behind, cannot rescue this
-			// Instead, skip to where the ring starts now
-			r.cycles = r.ring.cycles
-			r.pos = 1
-			return r.ring.data[0], false
 		}
+
+		// Two or more cycles behind, cannot rescue this
+		// Instead, skip to where the ring starts now
+		r.cycles = r.ring.cycles
+		r.pos = 1
+		return r.ring.data[0], false
 	}
 
 	return nil, false

@@ -68,7 +68,7 @@ func TestConcurrentWriteReadWithRange(t *testing.T) {
 	go func() {
 		ring.Write("test0")
 		ring.Write("test1")
-		ring.Eof()
+		ring.EOF()
 	}()
 
 	// Each output has its go-routine
@@ -110,7 +110,7 @@ func TestReadWithStarve(t *testing.T) {
 	<-proceed
 	reader.Cancel()
 
-	ring.Eof()
+	ring.EOF()
 	ring.Cancel()
 }
 
@@ -123,7 +123,7 @@ func TestReadNoStarve(t *testing.T) {
 	go ring.Run()
 
 	ring.Write("test0")
-	ring.Eof()
+	ring.EOF()
 
 	if s := <-readCh; s != "test0" {
 		t.Error("Expected string not found")
